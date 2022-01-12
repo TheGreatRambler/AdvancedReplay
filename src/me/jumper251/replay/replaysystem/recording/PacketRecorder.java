@@ -8,8 +8,10 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.Sound;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Item;
@@ -26,11 +28,13 @@ import com.comphenix.packetwrapper.WrapperPlayServerEntityDestroy;
 import com.comphenix.packetwrapper.WrapperPlayServerEntityTeleport;
 import com.comphenix.packetwrapper.WrapperPlayServerEntityVelocity;
 import com.comphenix.packetwrapper.WrapperPlayServerExplosion;
+import com.comphenix.packetwrapper.WrapperPlayServerNamedSoundEffect;
 import com.comphenix.packetwrapper.WrapperPlayServerMultiBlockChange;
 import com.comphenix.packetwrapper.WrapperPlayServerRelEntityMove;
 import com.comphenix.packetwrapper.WrapperPlayServerRelEntityMoveLook;
 import com.comphenix.packetwrapper.WrapperPlayServerSpawnEntity;
 import com.comphenix.packetwrapper.WrapperPlayServerSpawnEntityLiving;
+import com.comphenix.packetwrapper.WrapperPlayServerWorldEvent;
 import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.events.ListenerPriority;
@@ -42,6 +46,7 @@ import com.comphenix.protocol.wrappers.EnumWrappers.PlayerDigType;
 import com.comphenix.protocol.wrappers.MultiBlockChangeInfo;
 import com.comphenix.protocol.wrappers.WrappedBlockData;
 
+import com.cryptomorin.xseries.XMaterial;
 
 import me.jumper251.replay.ReplaySystem;
 import me.jumper251.replay.filesystem.ConfigManager;
@@ -58,11 +63,11 @@ import me.jumper251.replay.replaysystem.data.types.LocationData;
 import me.jumper251.replay.replaysystem.data.types.MetadataUpdate;
 import me.jumper251.replay.replaysystem.data.types.MovingData;
 import me.jumper251.replay.replaysystem.data.types.PacketData;
-import me.jumper251.replay.replaysystem.data.types.SerializableItemStack;
+import me.jumper251.replay.replaysystem.data.types.SoundEffectData;
 import me.jumper251.replay.replaysystem.data.types.VelocityData;
+import me.jumper251.replay.replaysystem.data.types.WorldEventData;
 import me.jumper251.replay.replaysystem.recording.optimization.ReplayOptimizer;
 import me.jumper251.replay.replaysystem.utils.NPCManager;
-import me.jumper251.replay.utils.MaterialBridge;
 import me.jumper251.replay.utils.VersionUtil;
 import me.jumper251.replay.utils.VersionUtil.VersionEnum;
 
@@ -85,6 +90,8 @@ public class PacketRecorder extends AbstractListener{
 	private ReplayOptimizer optimizer;
 	
 	private AbstractListener compListener, listener;
+
+	private boolean FLAT;
 	
 	public PacketRecorder(Recorder recorder) {
 		super();
@@ -96,6 +103,9 @@ public class PacketRecorder extends AbstractListener{
 		this.spawnedHooks = new ArrayList<Integer>();
 		this.recorder = recorder;
 		this.optimizer = new ReplayOptimizer();
+		this.FLAT = VersionUtil.isCompatible(VersionEnum.V1_13) || VersionUtil.isCompatible(VersionEnum.V1_14)
+			|| VersionUtil.isCompatible(VersionEnum.V1_15) || VersionUtil.isCompatible(VersionEnum.V1_16)
+			|| VersionUtil.isCompatible(VersionEnum.V1_17);
 		
 	}	
 
@@ -108,7 +118,7 @@ public class PacketRecorder extends AbstractListener{
 		this.packetAdapter = new PacketAdapter(ReplaySystem.getInstance(), ListenerPriority.HIGHEST,
 				PacketType.Play.Client.POSITION, PacketType.Play.Client.POSITION_LOOK, PacketType.Play.Client.LOOK, PacketType.Play.Client.ENTITY_ACTION, PacketType.Play.Client.ARM_ANIMATION, 
 				PacketType.Play.Client.BLOCK_DIG, PacketType.Play.Server.SPAWN_ENTITY, PacketType.Play.Server.ENTITY_DESTROY, PacketType.Play.Server.ENTITY_VELOCITY, PacketType.Play.Server.SPAWN_ENTITY_LIVING,
-				PacketType.Play.Server.REL_ENTITY_MOVE, PacketType.Play.Server.REL_ENTITY_MOVE_LOOK, PacketType.Play.Server.ENTITY_LOOK, PacketType.Play.Server.POSITION, PacketType.Play.Server.ENTITY_TELEPORT, PacketType.Play.Server.BLOCK_CHANGE, PacketType.Play.Server.MULTI_BLOCK_CHANGE, PacketType.Play.Server.EXPLOSION) {
+				PacketType.Play.Server.REL_ENTITY_MOVE, PacketType.Play.Server.REL_ENTITY_MOVE_LOOK, PacketType.Play.Server.ENTITY_LOOK, PacketType.Play.Server.POSITION, PacketType.Play.Server.ENTITY_TELEPORT, PacketType.Play.Server.BLOCK_CHANGE, PacketType.Play.Server.MULTI_BLOCK_CHANGE, PacketType.Play.Server.EXPLOSION, PacketType.Play.Server.NAMED_SOUND_EFFECT, PacketType.Play.Server.WORLD_EVENT) {
             @Override
             public void onPacketReceiving(PacketEvent event) {
             		
@@ -166,6 +176,7 @@ public class PacketRecorder extends AbstractListener{
             	}
             }
             
+			@SuppressWarnings("deprecation")
 			@Override
             public void onPacketSending(PacketEvent event) {
             		Player p = event.getPlayer();
@@ -327,9 +338,18 @@ public class PacketRecorder extends AbstractListener{
 					if (event.getPacketType() == PacketType.Play.Server.BLOCK_CHANGE) {
 						WrapperPlayServerBlockChange packet = new WrapperPlayServerBlockChange(event.getPacket());
 	
-						LocationData loc = LocationData.fromLocation(packet.getBukkitLocation(event.getPlayer().getWorld()));
-						ItemData before = new ItemData(SerializableItemStack.fromItemStack(new ItemStack(Material.AIR)));
-						ItemData after = new ItemData(SerializableItemStack.fromItemStack(new ItemStack(packet.getBlockData().getType())));
+						Location bukkitLocation = packet.getBukkitLocation(event.getPlayer().getWorld());
+						LocationData loc = LocationData.fromLocation(bukkitLocation);
+						ItemData before = new ItemData(Material.AIR, 0, null);
+
+						ItemData after = null;
+
+						if (FLAT) {
+							after = new ItemData(packet.getBlockData().getType(), bukkitLocation.getBlock().getState().getRawData(), null);
+						} else {
+							after = new ItemData(packet.getBlockData().getType(), packet.getBlockData().getData(), null);
+						}
+
 						addData(p.getName(), new BlockChangeData(loc, before, after));
 					}
 
@@ -337,14 +357,16 @@ public class PacketRecorder extends AbstractListener{
 						WrapperPlayServerMultiBlockChange packet = new WrapperPlayServerMultiBlockChange(event.getPacket());
 	
 						Material firstMaterial = packet.getRecords()[0].getData().getType();
-						final Material endPortalMat = MaterialBridge.getWithoutLegacy("END_PORTAL");
-						final Material bedrockMat = MaterialBridge.getWithoutLegacy("BEDROCK");
 
-						if (firstMaterial == endPortalMat || firstMaterial == bedrockMat) {
+						final Material endPortalMat = XMaterial.END_PORTAL.parseMaterial();
+						final Material endPortalFrameMat = XMaterial.END_PORTAL_FRAME.parseMaterial();
+						final Material bedrockMat = XMaterial.BEDROCK.parseMaterial();
+
+						if (firstMaterial == endPortalMat || firstMaterial == endPortalFrameMat || firstMaterial == bedrockMat) {
 							for (MultiBlockChangeInfo record : packet.getRecords()) {
 								LocationData loc = LocationData.fromLocation(record.getLocation(event.getPlayer().getWorld()));
-								ItemData before = new ItemData(SerializableItemStack.fromItemStack(new ItemStack(Material.AIR)));
-								ItemData after = new ItemData(SerializableItemStack.fromItemStack(new ItemStack(record.getData().getType())));
+								ItemData before = new ItemData(Material.AIR, 0, null);
+								ItemData after = new ItemData(record.getData().getType(), record.getData().getData(), null);
 								addData(p.getName(), new BlockChangeData(loc, before, after));
 							}
 						}
@@ -355,16 +377,26 @@ public class PacketRecorder extends AbstractListener{
 	
 						for (BlockPosition pos : packet.getRecords()) {
 							LocationData loc = LocationData.fromLocation(pos.toLocation(event.getPlayer().getWorld()));
-							ItemData before = new ItemData(SerializableItemStack.fromItemStack(new ItemStack(Material.AIR)));
-							ItemData after = new ItemData(SerializableItemStack.fromItemStack(new ItemStack(Material.AIR)));
+							ItemData before = new ItemData(Material.AIR, 0, null);
+							ItemData after = new ItemData(Material.AIR, 0, null);
 							addData(p.getName(), new BlockChangeData(loc, before, after));
 						}
 					}
 
-            }
-            
-            
+					if (event.getPacketType() == PacketType.Play.Server.NAMED_SOUND_EFFECT) {
+						WrapperPlayServerNamedSoundEffect packet = new WrapperPlayServerNamedSoundEffect(event.getPacket());
 
+						Sound soundEffect = packet.getSoundEffect();
+						String soundCategory = packet.getSoundCategory().getKey();
+						addData(p.getName(), new SoundEffectData(soundEffect, soundCategory, packet.getEffectPositionX(), packet.getEffectPositionY(), packet.getEffectPositionZ(), packet.getVolume(), packet.getPitch()));
+					}
+
+					if (event.getPacketType() == PacketType.Play.Server.WORLD_EVENT) {
+						WrapperPlayServerWorldEvent packet = new WrapperPlayServerWorldEvent(event.getPacket());
+
+						addData(p.getName(), new WorldEventData(packet.getEffectId(), packet.getLocation(), packet.getData(), packet.getDisableRelativeVolume()));
+					}
+			}
 		};
 		
 	    ProtocolLibrary.getProtocolManager().addPacketListener(this.packetAdapter);

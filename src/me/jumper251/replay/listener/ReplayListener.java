@@ -6,7 +6,7 @@ import java.util.Arrays;
 
 
 import org.bukkit.Chunk;
-
+import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -26,6 +26,7 @@ import org.bukkit.event.player.PlayerToggleSneakEvent;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.scheduler.BukkitRunnable;
 
+import com.cryptomorin.xseries.XMaterial;
 
 import me.jumper251.replay.ReplaySystem;
 import me.jumper251.replay.filesystem.ConfigManager;
@@ -84,15 +85,19 @@ public class ReplayListener extends AbstractListener {
 							replayer.setSpeed(1);
 						} else if (replayer.getSpeed() == 1) {
 							replayer.setSpeed(2);
+						} else if (replayer.getSpeed() == 2) {
+							replayer.setSpeed(4);
 						}
 						
 					} else {
-						if (replayer.getSpeed() == 2) {
+						if (replayer.getSpeed() > 1) {
 							replayer.setSpeed(1);
 						} else if (replayer.getSpeed() ==  1) {
 							replayer.setSpeed(0.5D);
 						} else if (replayer.getSpeed() == 0.5D) {
 							 replayer.setSpeed(0.25D);
+						} else if (replayer.getSpeed() == 0.25D) {
+							replayer.setSpeed(0.125D);
 						}
 					}
 					
@@ -134,7 +139,7 @@ public class ReplayListener extends AbstractListener {
 				if (e.getView().getTitle().equalsIgnoreCase("§7Teleporter")) {
 					Replayer replayer = ReplayHelper.replaySessions.get(p.getName());
 					
-					if (e.getCurrentItem() != null && e.getCurrentItem().getItemMeta() != null && e.getCurrentItem().getItemMeta().getDisplayName() != null && e.getCurrentItem().getType().getId() == 397) {
+					if (e.getCurrentItem() != null && e.getCurrentItem().getItemMeta() != null && e.getCurrentItem().getItemMeta().getDisplayName() != null && e.getCurrentItem().getType() == XMaterial.PLAYER_HEAD.parseMaterial()) {
 						String owner = e.getCurrentItem().getItemMeta().getDisplayName().replaceAll("§6", "");
 						if (replayer.getNPCList().containsKey(owner)) {
 							INPC npc = replayer.getNPCList().get(owner);
@@ -270,7 +275,8 @@ public class ReplayListener extends AbstractListener {
 			ReplayPacketListener packetListener = ReplayHelper.replaySessions.get(p.getName()).getSession().getPacketListener();
 			
 			if (packetListener.getPrevious() != -1) {
-				packetListener.setCamera(p, p.getEntityId(), packetListener.getPrevious());
+				packetListener.fixSpectatingLocation(p);
+				packetListener.setCamera(p, p.getEntityId(), packetListener.getPrevious(), false);
 				
 				p.setAllowFlight(true);
 			}

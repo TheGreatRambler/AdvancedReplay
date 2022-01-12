@@ -54,7 +54,7 @@ public class ConfigManager {
 		if (!file.exists()) {
 			LogUtils.log("Creating Config files...");
 			
-			cfg.set("general.max_length", 3600);
+			cfg.set("general.max_length", 2147483647);
 			cfg.set("general.record_on_startup", false);
 			cfg.set("general.save_on_stop", false);
 			cfg.set("general.use_mysql", false);
@@ -62,8 +62,8 @@ public class ConfigManager {
 			cfg.set("general.quality", "high");
 			cfg.set("general.cleanup_replays", -1);
 			cfg.set("general.hide_players", false);
-			cfg.set("general.add_new_players", false);	
-			cfg.set("general.update_notifications", true);
+			cfg.set("general.add_new_players", false);
+			cfg.set("general.update_notifications", false);
 			
 			cfg.set("general.death_message", "&6{name} &7died.");
 			cfg.set("general.quit_message", "&6{name} &7left the game.");

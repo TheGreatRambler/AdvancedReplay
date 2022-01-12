@@ -10,6 +10,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 
+import com.cryptomorin.xseries.XMaterial;
 
 import com.comphenix.packetwrapper.WrapperPlayServerEntityEquipment;
 import com.comphenix.protocol.wrappers.EnumWrappers.ItemSlot;
@@ -17,8 +18,6 @@ import com.comphenix.protocol.wrappers.Pair;
 
 import me.jumper251.replay.replaysystem.data.types.InvData;
 import me.jumper251.replay.replaysystem.data.types.ItemData;
-import me.jumper251.replay.replaysystem.data.types.SerializableItemStack;
-import me.jumper251.replay.utils.MaterialBridge;
 import me.jumper251.replay.utils.VersionUtil;
 import me.jumper251.replay.utils.VersionUtil.VersionEnum;
 
@@ -30,8 +29,9 @@ public class NPCManager {
 			Material.DIAMOND_HELMET, Material.DIAMOND_CHESTPLATE, Material.DIAMOND_LEGGINGS, Material.DIAMOND_BOOTS,
 			Material.IRON_HELMET, Material.IRON_CHESTPLATE, Material.IRON_LEGGINGS, Material.IRON_BOOTS,
 			Material.CHAINMAIL_HELMET, Material.CHAINMAIL_CHESTPLATE, Material.CHAINMAIL_LEGGINGS, Material.CHAINMAIL_BOOTS,
-			Material.GOLD_HELMET, Material.GOLD_CHESTPLATE, Material.GOLD_LEGGINGS, Material.GOLD_BOOTS,
-			Material.LEATHER_HELMET, Material.LEATHER_CHESTPLATE, Material.LEATHER_LEGGINGS, Material.LEATHER_BOOTS
+			XMaterial.GOLDEN_HELMET.parseMaterial(), XMaterial.GOLDEN_CHESTPLATE.parseMaterial(), XMaterial.GOLDEN_LEGGINGS.parseMaterial(),
+			XMaterial.GOLDEN_BOOTS.parseMaterial(), Material.LEATHER_HELMET, Material.LEATHER_CHESTPLATE,
+			Material.LEATHER_LEGGINGS, Material.LEATHER_BOOTS
 	});
 	
 	
@@ -146,15 +146,14 @@ public class NPCManager {
 	
 	public static ItemStack fromID(ItemData data) {
 		if (data == null) return new ItemStack(Material.AIR);
-		if (data.getItemStack() != null)  return data.getItemStack().toItemStack(); 
 		
-		return new ItemStack(MaterialBridge.fromID(data.getId()), 1, (short)data.getSubId());
+		return new ItemStack(data.getId(), 1, (short)data.getSubId());
 	}
 	
 	public static ItemData fromItemStack(ItemStack stack) {
 		if (stack == null) return null;
 		
-		return new ItemData(SerializableItemStack.fromItemStack(stack));
+		return new ItemData(stack.getType(), 0, null);
 	}
 	
 	@SuppressWarnings("deprecation")

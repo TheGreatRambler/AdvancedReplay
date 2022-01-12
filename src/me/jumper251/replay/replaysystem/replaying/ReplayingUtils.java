@@ -21,6 +21,8 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.World;
+import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Item;
@@ -31,11 +33,18 @@ import com.comphenix.packetwrapper.AbstractPacket;
 import com.comphenix.packetwrapper.WrapperPlayServerEntityDestroy;
 import com.comphenix.packetwrapper.WrapperPlayServerEntityEquipment;
 import com.comphenix.packetwrapper.WrapperPlayServerEntityVelocity;
+import com.comphenix.packetwrapper.WrapperPlayServerNamedSoundEffect;
+import com.comphenix.packetwrapper.WrapperPlayServerWorldEvent;
+import com.comphenix.protocol.wrappers.BlockPosition;
 import com.comphenix.protocol.wrappers.WrappedDataWatcher;
 import com.comphenix.protocol.wrappers.WrappedGameProfile;
 import com.comphenix.protocol.wrappers.WrappedSignedProperty;
 
 import com.comphenix.protocol.wrappers.EnumWrappers.PlayerAction;
+import com.comphenix.protocol.wrappers.EnumWrappers.SoundCategory;
+
+import com.cryptomorin.xseries.XBlock;
+import com.cryptomorin.xseries.XMaterial;
 
 import me.jumper251.replay.ReplaySystem;
 import me.jumper251.replay.filesystem.ConfigManager;
@@ -53,7 +62,6 @@ import me.jumper251.replay.replaysystem.utils.entities.PacketEntity;
 import me.jumper251.replay.replaysystem.utils.entities.PacketEntityOld;
 import me.jumper251.replay.replaysystem.utils.entities.PacketNPC;
 import me.jumper251.replay.replaysystem.utils.entities.PacketNPCOld;
-import me.jumper251.replay.utils.MaterialBridge;
 import me.jumper251.replay.utils.MathUtils;
 import me.jumper251.replay.utils.VersionUtil;
 import me.jumper251.replay.utils.VersionUtil.VersionEnum;
@@ -69,6 +77,8 @@ public class ReplayingUtils {
 	private HashMap<Integer, Entity> itemEntities;
 	
 	private HashMap<Integer, Integer> hooks;
+
+	private BlockFace lastFacing;
 
 	public ReplayingUtils(Replayer replayer) {
 		this.replayer = replayer;
@@ -104,12 +114,24 @@ public class ReplayingUtils {
 				MovingData movingData = (MovingData) action.getPacketData();
 				
 				if (VersionUtil.isAbove(VersionEnum.V1_15) || VersionUtil.isCompatible(VersionEnum.V1_8)) {
-					npc.move(new Location(npc.getOrigin().getWorld(), movingData.getX(), movingData.getY(), movingData.getZ()), true, movingData.getYaw(), movingData.getPitch());
+					Location loc = new Location(npc.getOrigin().getWorld(), movingData.getX(), movingData.getY(), movingData.getZ());
+
+					npc.move(loc, true, movingData.getYaw(), movingData.getPitch());
+
+					loc.setPitch(movingData.getPitch());
+					loc.setYaw(movingData.getYaw());
+					this.replayer.getSession().getPacketListener().updateLocationIfNeeded(npc.getId(), npc.getVisible(), loc);
 				}
 				
 				if (VersionUtil.isBetween(VersionEnum.V1_9, VersionEnum.V1_14)) {
-					npc.teleport(new Location(npc.getOrigin().getWorld(), movingData.getX(), movingData.getY(), movingData.getZ()), true);
+					Location loc = new Location(npc.getOrigin().getWorld(), movingData.getX(), movingData.getY(), movingData.getZ());
+
+					npc.teleport(loc, true);
 					npc.look(movingData.getYaw(), movingData.getPitch());
+
+					loc.setPitch(movingData.getPitch());
+					loc.setYaw(movingData.getYaw());
+					this.replayer.getSession().getPacketListener().updateLocationIfNeeded(npc.getId(), npc.getVisible(), loc);
 				}
 		
 			}
@@ -294,12 +316,16 @@ public class ReplayingUtils {
 			if (action.getPacketData() instanceof WorldChangeData) {
 				WorldChangeData worldChange = (WorldChangeData) action.getPacketData();
 				Location loc = LocationData.toLocation(worldChange.getLocation());
+
+				this.replayer.getSession().getPacketListener().ignoreNextDespawn(replayer.getWatchingPlayer());
 				
 				npc.despawn();
 				npc.setOrigin(loc);
 				npc.setLocation(loc);
 				
 				npc.respawn(replayer.getWatchingPlayer());
+
+				this.replayer.getSession().getPacketListener().goToNewLocation(npc.getId(), replayer.getWatchingPlayer(), loc);
 				
 			}
 			
@@ -324,6 +350,37 @@ public class ReplayingUtils {
 					
 					packet.sendPacket(replayer.getWatchingPlayer());
 				}
+
+			}
+
+			if (action.getPacketData() instanceof SoundEffectData) {
+				SoundEffectData soundEffect = (SoundEffectData) action.getPacketData();
+
+
+				WrapperPlayServerNamedSoundEffect packet = new WrapperPlayServerNamedSoundEffect();
+				packet.setSoundEffect(soundEffect.getSoundEffect());
+				packet.setSoundCategory(SoundCategory.getByKey(soundEffect.getSoundCategory()));
+				packet.setEffectPositionX(soundEffect.getEffectX());
+				packet.setEffectPositionY(soundEffect.getEffectY());
+				packet.setEffectPositionZ(soundEffect.getEffectZ());
+				packet.setVolume(soundEffect.getVolume());
+				packet.setPitch(soundEffect.getPitch());
+				
+				packet.sendPacket(replayer.getWatchingPlayer());
+
+			}
+
+			if (action.getPacketData() instanceof WorldEventData) {
+				WorldEventData worldEvent = (WorldEventData) action.getPacketData();
+
+
+				WrapperPlayServerWorldEvent packet = new WrapperPlayServerWorldEvent();
+				packet.setEffectId(worldEvent.getEffectId());
+				packet.setLocation(worldEvent.getLocation());
+				packet.setData(worldEvent.getData());
+				packet.setDisableRelativeVolume(worldEvent.getDisableRelativeVolume());
+				
+				packet.sendPacket(replayer.getWatchingPlayer());
 
 			}
 			
@@ -501,37 +558,72 @@ public class ReplayingUtils {
 			@SuppressWarnings("deprecation")
 			@Override
 			public void run() {
-				if (blockChange.getAfter().getId() == 0 && blockChange.getBefore().getId() != 0 && MaterialBridge.fromID(blockChange.getBefore().getId()) != Material.FIRE && blockChange.getBefore().getId() != 11 && blockChange.getBefore().getId() != 9 && blockChange.getBefore().getId() != 10 && blockChange.getBefore().getId() != 8) {
+				if (blockChange.getAfter().getId() == Material.AIR && blockChange.getBefore().getId() != Material.AIR && blockChange.getBefore().getId() != Material.FIRE && blockChange.getBefore().getId() != Material.LAVA && blockChange.getBefore().getId() != Material.WATER) {
 					loc.getWorld().playEffect(loc, Effect.STEP_SOUND, blockChange.getBefore().getId(), 15);
 					
 				}
-				int id = blockChange.getAfter().getId();
+				Material id = blockChange.getAfter().getId();
 				int subId = blockChange.getAfter().getSubId();
+				BlockFace facing = blockChange.getAfter().getFacing();
 
-				if (id == 9) id = 8;
-				if (id == 11) id = 10;
-
-				
 				if (ConfigManager.REAL_CHANGES) {
-					if (VersionUtil.isCompatible(VersionEnum.V1_13) || VersionUtil.isCompatible(VersionEnum.V1_14) || VersionUtil.isCompatible(VersionEnum.V1_15) || VersionUtil.isCompatible(VersionEnum.V1_16) || VersionUtil.isCompatible(VersionEnum.V1_17)) {
-						final Material netherPortalMat = MaterialBridge.getWithoutLegacy("NETHER_PORTAL");
-						final Material obsidianMat = MaterialBridge.getWithoutLegacy("OBSIDIAN");
-						final Material enderEyeMat = MaterialBridge.getWithoutLegacy("ENDER_EYE");
-						boolean applyPhysics = !(getBlockMaterial(blockChange.getAfter()) == netherPortalMat || getBlockMaterial(blockChange.getAfter()) == obsidianMat);
+					boolean isDoor = id == XMaterial.OAK_DOOR.parseMaterial() ||
+						id == XMaterial.IRON_DOOR.parseMaterial() ||
+						id == XMaterial.DARK_OAK_DOOR.parseMaterial() || 
+						id == XMaterial.ACACIA_DOOR.parseMaterial() || 
+						id == XMaterial.BIRCH_DOOR.parseMaterial() || 
+						id == XMaterial.JUNGLE_DOOR.parseMaterial() || 
+						id == XMaterial.SPRUCE_DOOR.parseMaterial() || 
+						id == XMaterial.CRIMSON_DOOR.parseMaterial() || 
+						id == XMaterial.WARPED_DOOR.parseMaterial();
+					boolean isBed = id.name().contains("_BED");
+					
+					boolean applyPhysics = !(id == XMaterial.NETHER_PORTAL.parseMaterial() || id == Material.OBSIDIAN || id == Material.OBSIDIAN || isDoor || isBed);
 
-						Material placingMaterial = getBlockMaterial(blockChange.getAfter());
-						if (placingMaterial != enderEyeMat) {
-							loc.getBlock().setType(placingMaterial, applyPhysics);
+					Material previousId = loc.getBlock().getType();
+
+					if (previousId != id && !isBed) {
+						loc.getBlock().setType(id, applyPhysics);
+						loc.getBlock().getState().setRawData((byte) subId);
+						XBlock.setOrient(loc.getBlock(), subId);
+					}
+
+					Material obsidianMaterial = XMaterial.OBSIDIAN.parseMaterial();
+					if (id == XMaterial.NETHER_PORTAL.parseMaterial()){
+						// Partially fixes a quirk in nether portal creation
+						if (loc.clone().add(0, -1, 1).getBlock().getType() == obsidianMaterial || loc.clone().add(0, -1, -1).getBlock().getType() == obsidianMaterial) {
+							XBlock.setOrient(loc.getBlock(), 2);
 						}
-					} else {
-						boolean applyPhysics = !(id == 90 || id == 49);
-						loc.getBlock().setTypeIdAndData(id, (byte) subId, applyPhysics);
+					}
+
+					if (facing != null) {
+						XBlock.setDirection(loc.getBlock(), facing);
+					}
+
+					if (id == XMaterial.END_PORTAL_FRAME.parseMaterial() && subId > 3) {
+						XBlock.setEnderPearlOnFrame(loc.getBlock(), true);
+					}
+
+					if (isDoor && loc.clone().add(0, -1, 0).getBlock().getType() != id) {
+						Block topDoor = loc.clone().add(0, 1, 0).getBlock();
+						topDoor.setType(id, false);
+						XBlock.setDoorTop(topDoor, true);
+						XBlock.setDirection(topDoor, facing);
+					}
+
+					if (isBed) {
+						if (previousId != id) {
+							XBlock.setBed(loc.getBlock(), facing, id);
+							lastFacing = facing;
+						} else {
+							XBlock.setBed(loc.getBlock().getRelative(lastFacing), lastFacing, id);
+						}
 					}
 				} else {
 					if (VersionUtil.isCompatible(VersionEnum.V1_13) || VersionUtil.isCompatible(VersionEnum.V1_14) || VersionUtil.isCompatible(VersionEnum.V1_15) || VersionUtil.isCompatible(VersionEnum.V1_16) || VersionUtil.isCompatible(VersionEnum.V1_17)) {
 						replayer.getWatchingPlayer().sendBlockChange(loc, getBlockMaterial(blockChange.getAfter()), (byte) subId);
 					} else {
-						replayer.getWatchingPlayer().sendBlockChange(loc, id, (byte) subId);
+						replayer.getWatchingPlayer().sendBlockChange(loc, id.createBlockData());
 					}
 				}
 				
@@ -541,9 +633,7 @@ public class ReplayingUtils {
 	}
 	
 	private Material getBlockMaterial(ItemData data) {
-		if (data.getItemStack() != null) return MaterialBridge.getWithoutLegacy(String.valueOf(data.getItemStack().getItemStack().get("type")));
-
-		return MaterialBridge.fromID(data.getId());
+		return data.getId();
 	}
 	
 	private void spawnItemStack(EntityItemData entityData) {
@@ -604,7 +694,8 @@ public class ReplayingUtils {
 			if (VersionUtil.isAbove(VersionEnum.V1_13)) {
 				location.getBlock().setType(getBlockMaterial(itemData));
 			} else {
-				location.getBlock().setTypeIdAndData(itemData.getId(), (byte) itemData.getSubId(), true);
+				location.getBlock().setType(itemData.getId(), false);
+				location.getBlock().getState().setRawData((byte) itemData.getSubId());
 			}
 		});
 	}

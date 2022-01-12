@@ -15,6 +15,8 @@ import org.bukkit.inventory.meta.SkullMeta;
 import com.comphenix.packetwrapper.WrapperPlayServerTitle;
 import com.comphenix.protocol.wrappers.EnumWrappers.TitleAction;
 
+import com.cryptomorin.xseries.XMaterial;
+
 import me.jumper251.replay.filesystem.ItemConfig;
 import me.jumper251.replay.filesystem.ItemConfigOption;
 import me.jumper251.replay.filesystem.ItemConfigType;
@@ -69,7 +71,7 @@ public class ReplayHelper {
 		int index = 0;
 		
 		for (String name : replayer.getNPCList().keySet()) {
-			ItemStack stack = new ItemStack(Material.SKULL_ITEM,1,(short)3);
+			ItemStack stack = new ItemStack(XMaterial.PLAYER_HEAD.parseMaterial(), 1, (short)3);
 			SkullMeta meta = (SkullMeta) stack.getItemMeta();
 			meta.setDisplayName("§6" + name);
 			meta.setOwner(name);

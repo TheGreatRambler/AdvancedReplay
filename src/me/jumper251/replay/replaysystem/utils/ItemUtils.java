@@ -5,6 +5,8 @@ import java.util.List;
 
 import org.bukkit.Material;
 
+import com.cryptomorin.xseries.XMaterial;
+
 import me.jumper251.replay.utils.VersionUtil;
 import me.jumper251.replay.utils.VersionUtil.VersionEnum;
 
@@ -27,61 +29,61 @@ public class ItemUtils {
 	  }
 	  
 	  public static boolean isSword(Material mat) {
-		  return mat == Material.WOOD_SWORD || mat == Material.GOLD_SWORD || mat == Material.IRON_SWORD || mat == Material.DIAMOND_SWORD;
+		  return mat == Material.WOODEN_SWORD || mat == Material.GOLDEN_SWORD || mat == Material.IRON_SWORD || mat == Material.DIAMOND_SWORD;
 	  }
 	  
 	  static {
-		  INTERACTABLE.add(Material.STONE_BUTTON);
-		    INTERACTABLE.add(Material.LEVER);
-		    INTERACTABLE.add(Material.CHEST);
-		    INTERACTABLE.add(Material.WOOD_BUTTON);
-		    INTERACTABLE.add(Material.WOOD_DOOR);
-		    INTERACTABLE.add(Material.REDSTONE_COMPARATOR);
-		    INTERACTABLE.add(Material.REDSTONE_COMPARATOR_OFF);
-		    INTERACTABLE.add(Material.REDSTONE_COMPARATOR_ON);
+		  INTERACTABLE.add(XMaterial.STONE_BUTTON.parseMaterial());
+		    INTERACTABLE.add(XMaterial.LEVER.parseMaterial());
+		    INTERACTABLE.add(XMaterial.CHEST.parseMaterial());
+		    INTERACTABLE.add(XMaterial.OAK_BUTTON.parseMaterial());
+		    INTERACTABLE.add(XMaterial.OAK_DOOR.parseMaterial());
+		    INTERACTABLE.add(XMaterial.COMPARATOR.parseMaterial());
+		    //INTERACTABLE.add(Material.REDSTONE_COMPARATOR_OFF);
+		    //INTERACTABLE.add(Material.REDSTONE_COMPARATOR_ON);
 		    if(!VersionUtil.isCompatible(VersionEnum.V1_8)){
-		    	INTERACTABLE.add(Material.COMMAND);
-		    	INTERACTABLE.add(Material.COMMAND_CHAIN);
-		    	INTERACTABLE.add(Material.COMMAND_MINECART);
-		    	INTERACTABLE.add(Material.COMMAND_REPEATING);
+		    	INTERACTABLE.add(XMaterial.COMMAND_BLOCK.parseMaterial());
+		    	INTERACTABLE.add(XMaterial.CHAIN_COMMAND_BLOCK.parseMaterial());
+		    	INTERACTABLE.add(XMaterial.COMMAND_BLOCK_MINECART.parseMaterial());
+		    	INTERACTABLE.add(XMaterial.REPEATING_COMMAND_BLOCK.parseMaterial());
 		    }
-		    INTERACTABLE.add(Material.BREWING_STAND);
-		    INTERACTABLE.add(Material.FURNACE);
-		    INTERACTABLE.add(Material.BURNING_FURNACE);
-		    INTERACTABLE.add(Material.SIGN);
-		    INTERACTABLE.add(Material.SIGN_POST);
-		    INTERACTABLE.add(Material.WALL_SIGN);
-		    INTERACTABLE.add(Material.TRAPPED_CHEST);
-		    INTERACTABLE.add(Material.TRAP_DOOR);
-		    INTERACTABLE.add(Material.ENCHANTMENT_TABLE);
-		    INTERACTABLE.add(Material.DROPPER);
-		    INTERACTABLE.add(Material.DISPENSER);
-		    INTERACTABLE.add(Material.ENDER_CHEST);
-		    INTERACTABLE.add(Material.FENCE_GATE);
-		    INTERACTABLE.add(Material.BEACON);
-		    INTERACTABLE.add(Material.NOTE_BLOCK);
-		    INTERACTABLE.add(Material.JUKEBOX);
-		    INTERACTABLE.add(Material.HOPPER);
-		    INTERACTABLE.add(Material.SPRUCE_DOOR);
-		    INTERACTABLE.add(Material.ACACIA_DOOR);
-		    INTERACTABLE.add(Material.DARK_OAK_DOOR);
-		    INTERACTABLE.add(Material.JUNGLE_DOOR);
-		    INTERACTABLE.add(Material.BIRCH_DOOR);
-		    INTERACTABLE.add(Material.SPRUCE_FENCE_GATE);
-		    INTERACTABLE.add(Material.ACACIA_FENCE_GATE);
-		    INTERACTABLE.add(Material.JUNGLE_FENCE_GATE);
-		    INTERACTABLE.add(Material.BIRCH_FENCE_GATE);
-		    INTERACTABLE.add(Material.DARK_OAK_FENCE_GATE);
-		    INTERACTABLE.add(Material.FENCE);
-		    INTERACTABLE.add(Material.SPRUCE_FENCE);
-		    INTERACTABLE.add(Material.JUNGLE_FENCE);
-		    INTERACTABLE.add(Material.ACACIA_FENCE);
-		    INTERACTABLE.add(Material.BIRCH_FENCE);
-		    INTERACTABLE.add(Material.DARK_OAK_FENCE);
-		    INTERACTABLE.add(Material.NETHER_FENCE);
-		    INTERACTABLE.add(Material.ANVIL);
-		    INTERACTABLE.add(Material.DAYLIGHT_DETECTOR);
-		    INTERACTABLE.add(Material.DAYLIGHT_DETECTOR_INVERTED);
-		    INTERACTABLE.add(Material.WORKBENCH);
+		    INTERACTABLE.add(XMaterial.BREWING_STAND.parseMaterial());
+		    INTERACTABLE.add(XMaterial.FURNACE.parseMaterial());
+		    //INTERACTABLE.add(Material.BURNING_FURNACE);
+		    INTERACTABLE.add(XMaterial.OAK_SIGN.parseMaterial());
+		    //INTERACTABLE.add(Material.SIGN_POST);
+		    INTERACTABLE.add(XMaterial.OAK_WALL_SIGN.parseMaterial());
+		    INTERACTABLE.add(XMaterial.TRAPPED_CHEST.parseMaterial());
+		    INTERACTABLE.add(XMaterial.OAK_TRAPDOOR.parseMaterial());
+		    INTERACTABLE.add(XMaterial.ENCHANTING_TABLE.parseMaterial());
+		    INTERACTABLE.add(XMaterial.DROPPER.parseMaterial());
+		    INTERACTABLE.add(XMaterial.DISPENSER.parseMaterial());
+		    INTERACTABLE.add(XMaterial.ENDER_CHEST.parseMaterial());
+		    INTERACTABLE.add(XMaterial.OAK_FENCE_GATE.parseMaterial());
+		    INTERACTABLE.add(XMaterial.BEACON.parseMaterial());
+		    INTERACTABLE.add(XMaterial.NOTE_BLOCK.parseMaterial());
+		    INTERACTABLE.add(XMaterial.JUKEBOX.parseMaterial());
+		    INTERACTABLE.add(XMaterial.HOPPER.parseMaterial());
+		    INTERACTABLE.add(XMaterial.SPRUCE_DOOR.parseMaterial());
+		    INTERACTABLE.add(XMaterial.ACACIA_DOOR.parseMaterial());
+		    INTERACTABLE.add(XMaterial.DARK_OAK_DOOR.parseMaterial());
+		    INTERACTABLE.add(XMaterial.JUNGLE_DOOR.parseMaterial());
+		    INTERACTABLE.add(XMaterial.BIRCH_DOOR.parseMaterial());
+		    INTERACTABLE.add(XMaterial.SPRUCE_FENCE_GATE.parseMaterial());
+		    INTERACTABLE.add(XMaterial.ACACIA_FENCE_GATE.parseMaterial());
+		    INTERACTABLE.add(XMaterial.JUNGLE_FENCE_GATE.parseMaterial());
+		    INTERACTABLE.add(XMaterial.BIRCH_FENCE_GATE.parseMaterial());
+		    INTERACTABLE.add(XMaterial.DARK_OAK_FENCE_GATE.parseMaterial());
+		    INTERACTABLE.add(XMaterial.OAK_FENCE.parseMaterial());
+		    INTERACTABLE.add(XMaterial.SPRUCE_FENCE.parseMaterial());
+		    INTERACTABLE.add(XMaterial.JUNGLE_FENCE.parseMaterial());
+		    INTERACTABLE.add(XMaterial.ACACIA_FENCE.parseMaterial());
+		    INTERACTABLE.add(XMaterial.BIRCH_FENCE.parseMaterial());
+		    INTERACTABLE.add(XMaterial.DARK_OAK_FENCE.parseMaterial());
+		    INTERACTABLE.add(XMaterial.NETHER_BRICK_FENCE.parseMaterial());
+		    INTERACTABLE.add(XMaterial.ANVIL.parseMaterial());
+		    INTERACTABLE.add(XMaterial.DAYLIGHT_DETECTOR.parseMaterial());
+		    //INTERACTABLE.add(Material.DAYLIGHT_DETECTOR_INVERTED);
+		    INTERACTABLE.add(XMaterial.CRAFTING_TABLE.parseMaterial());
 	  }
 }

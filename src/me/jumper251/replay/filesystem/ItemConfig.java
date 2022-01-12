@@ -8,8 +8,9 @@ import org.bukkit.Material;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 
+import com.cryptomorin.xseries.XMaterial;
+
 import me.jumper251.replay.ReplaySystem;
-import me.jumper251.replay.utils.MaterialBridge;
 import me.jumper251.replay.utils.VersionUtil;
 import me.jumper251.replay.utils.VersionUtil.VersionEnum;
 
@@ -84,8 +85,8 @@ public class ItemConfig {
 		for (ItemConfigType type : items.keySet()) {
 			ItemConfigOption option = items.get(type);
 						
-			if (option.getMaterial() == Material.WOOD_DOOR && (VersionUtil.isCompatible(VersionEnum.V1_13) || VersionUtil.isCompatible(VersionEnum.V1_14) || VersionUtil.isCompatible(VersionEnum.V1_15) || VersionUtil.isCompatible(VersionEnum.V1_16) || VersionUtil.isCompatible(VersionEnum.V1_17))) {
-				if (material.name().equals(MaterialBridge.WOOD_DOOR.getMaterialName()) && option.getName().equals(name)) return type;
+			if (option.getMaterial() == XMaterial.OAK_DOOR.parseMaterial() && (VersionUtil.isCompatible(VersionEnum.V1_13) || VersionUtil.isCompatible(VersionEnum.V1_14) || VersionUtil.isCompatible(VersionEnum.V1_15) || VersionUtil.isCompatible(VersionEnum.V1_16) || VersionUtil.isCompatible(VersionEnum.V1_17))) {
+				if (material == XMaterial.OAK_DOOR.parseMaterial() && option.getName().equals(name)) return type;
 			}
 			
 			if (option.getMaterial() == material && option.getName().equals(name)) return type;
@@ -95,12 +96,12 @@ public class ItemConfig {
 	
 	private static void addDefaults() {
 		items.put(ItemConfigType.TELEPORT, new ItemConfigOption(Material.COMPASS, "&7Teleport", 0));
-		items.put(ItemConfigType.SPEED, new ItemConfigOption(Material.WATCH, "&cSlow &8[&eRight&8] &aFast &8[&eShift Right&8]", 1));
-		items.put(ItemConfigType.LEAVE, new ItemConfigOption(Material.WOOD_DOOR, "&7Leave replay", 8));
-		items.put(ItemConfigType.FORWARD, new ItemConfigOption(Material.SKULL_ITEM, "&a» &e10 seconds", 5, "MHF_ArrowRight", 3));
-		items.put(ItemConfigType.BACKWARD, new ItemConfigOption(Material.SKULL_ITEM, "&c« &e10 seconds", 3, "MHF_ArrowLeft", 3));
+		items.put(ItemConfigType.SPEED, new ItemConfigOption(XMaterial.CLOCK.parseMaterial(), "&cSlow &8[&eRight&8] &aFast &8[&eShift Right&8]", 1));
+		items.put(ItemConfigType.LEAVE, new ItemConfigOption(XMaterial.OAK_DOOR.parseMaterial(), "&7Leave replay", 8));
+		items.put(ItemConfigType.FORWARD, new ItemConfigOption(XMaterial.PLAYER_HEAD.parseMaterial(), "&a» &e10 seconds", 5, "MHF_ArrowRight", 3));
+		items.put(ItemConfigType.BACKWARD, new ItemConfigOption(XMaterial.PLAYER_HEAD.parseMaterial(), "&c« &e10 seconds", 3, "MHF_ArrowLeft", 3));
 		items.put(ItemConfigType.RESUME, new ItemConfigOption(Material.SLIME_BLOCK, "&aResume", 4));
-		items.put(ItemConfigType.PAUSE, new ItemConfigOption(Material.SKULL_ITEM, "&cPause", 4, "Push_red_button", 3));
+		items.put(ItemConfigType.PAUSE, new ItemConfigOption(XMaterial.PLAYER_HEAD.parseMaterial(), "&cPause", 4, "Push_red_button", 3));
 
 	}
 	

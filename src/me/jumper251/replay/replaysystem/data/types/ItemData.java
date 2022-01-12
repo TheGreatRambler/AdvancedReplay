@@ -1,6 +1,7 @@
 package me.jumper251.replay.replaysystem.data.types;
 
-
+import org.bukkit.Material;
+import org.bukkit.block.BlockFace;
 
 public class ItemData extends PacketData{
 
@@ -8,31 +9,28 @@ public class ItemData extends PacketData{
 	 * 
 	 */
 	private static final long serialVersionUID = 3882181315164039909L;
+
 	
+	Material id;
+	int subId;
+	BlockFace facing;
 	
-	private int id, subId;
-	
-	private SerializableItemStack itemStack;
-	
-	public ItemData(int id, int subId) {
+	public ItemData(Material id, int subId, BlockFace facing) {
 		this.id = id;
 		this.subId = subId;
+		this.facing = facing;
 	}
 	
-	public ItemData(SerializableItemStack itemStack) {
-		this.itemStack = itemStack;
-	}
-	
-	public int getId() {
+	public Material getId() {
 		return id;
 	}
 	
 	public int getSubId() {
 		return subId;
 	}
-	
-	public SerializableItemStack getItemStack() {
-		return itemStack;
+
+	public BlockFace getFacing() {
+		return facing;
 	}
 
 }
