@@ -85,7 +85,7 @@ public class ItemConfig {
 		for (ItemConfigType type : items.keySet()) {
 			ItemConfigOption option = items.get(type);
 						
-			if (option.getMaterial() == XMaterial.OAK_DOOR.parseMaterial() && (VersionUtil.isCompatible(VersionEnum.V1_13) || VersionUtil.isCompatible(VersionEnum.V1_14) || VersionUtil.isCompatible(VersionEnum.V1_15) || VersionUtil.isCompatible(VersionEnum.V1_16) || VersionUtil.isCompatible(VersionEnum.V1_17))) {
+			if (option.getMaterial() == XMaterial.OAK_DOOR.parseMaterial() && (VersionUtil.isCompatible(VersionEnum.V1_13) || VersionUtil.isCompatible(VersionEnum.V1_14) || VersionUtil.isCompatible(VersionEnum.V1_15) || VersionUtil.isCompatible(VersionEnum.V1_16) || VersionUtil.isCompatible(VersionEnum.V1_17) || VersionUtil.isCompatible(VersionEnum.V1_18))) {
 				if (material == XMaterial.OAK_DOOR.parseMaterial() && option.getName().equals(name)) return type;
 			}
 			
