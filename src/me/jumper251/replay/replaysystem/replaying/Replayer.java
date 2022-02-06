@@ -120,16 +120,6 @@ public class Replayer {
 						
 						Replayer.this.currentTicks++;
 					}
-
-					if ((currentTicks + 4) < duration && speed == 4)  {
-						executeTick(currentTicks, false);
-						Replayer.this.currentTicks++;
-						executeTick(currentTicks, false);
-						Replayer.this.currentTicks++;
-						executeTick(currentTicks, false);
-						
-						Replayer.this.currentTicks++;
-					}
 					
 					updateXPBar();
 				} else {
